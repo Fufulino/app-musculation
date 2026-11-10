@@ -154,3 +154,13 @@ function kg(v) {
   const r = Math.round(v * 10) / 10;
   return r % 1 === 0 ? String(r) : r.toFixed(1);
 }
+
+// Temps de récupération : "90" → 90 s, "1:30" → 90 s, vide → pas de valeur
+function parseRest(v) {
+  const str = String(v ?? "").trim().replace(",", ".");
+  if (str === "") return null;
+  const m = str.match(/^(\d+):(\d{1,2})$/);
+  if (m) return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  const n = parseFloat(str);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+}

@@ -50,14 +50,14 @@ body {
 table.log { width: 100%; border-collapse: collapse; }
 table.log th { text-align: left; color: var(--muted); font-size: 11px; text-transform: uppercase;
   letter-spacing: .08em; padding: 6px 4px; border-bottom: 1px solid var(--line); font-weight: 600; }
-table.log td { padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 15px; vertical-align: middle; }
+table.log td { padding: 7px 2px; border-bottom: 1px solid var(--line); font-size: 15px; vertical-align: middle; }
 table.log tr:last-child td { border-bottom: none; }
 td.num { width: 44px; color: var(--muted); }
-.drop-td { color: var(--muted); font-size: 13px; padding-left: 14px; }
+.drop-td { color: var(--muted); font-size: 12px; padding-left: 8px; white-space: nowrap; }
 .cell-input { width: 64px; background: var(--card2); border: 1px solid var(--line); border-radius: 8px;
   color: var(--txt); padding: 6px 8px; font-size: 15px; text-align: right; font-family: inherit; }
 .cell-input:focus { outline: none; border-color: var(--accent); }
-.cell-input.narrow { width: 52px; padding: 6px 5px; font-size: 14px; }
+.cell-input.narrow { width: 44px; padding: 6px 3px; font-size: 14px; }
 .date-input { background: var(--card2); border: 1px solid var(--line); border-radius: 10px;
   color: var(--txt); padding: 8px 10px; font-size: 14px; color-scheme: dark; font-family: inherit; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }

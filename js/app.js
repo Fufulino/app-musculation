@@ -386,9 +386,9 @@ function renderExerciseHistoryScreen() {
           <strong>${fmtDateLong(s.date)}</strong>
           <button class="link" data-action="nav-session" data-id="${s.id}">Ouvrir ›</button>
         </div>
-        <table class="log mono"><thead><tr><th>Série</th><th style="text-align:right;">Poids</th><th style="text-align:right;">Reps</th></tr></thead>
-          <tbody>${(entry.sets || []).map((set, index) => `<tr><td>${index + 1}</td><td style="text-align:right;">${kg(effW(hasLest(entry.equip), set))} kg</td><td style="text-align:right;">${num(set.reps)}</td></tr>
-            ${(set.drops || []).map((drop, dropIndex) => `<tr><td class="drop-td">↳ dég. ${dropIndex + 1}</td><td style="text-align:right;">${kg(effW(hasLest(entry.equip), drop))} kg</td><td style="text-align:right;">${num(drop.reps)}</td></tr>`).join("")}`).join("")}</tbody>
+        <table class="log mono"><thead><tr><th>Série</th><th style="text-align:right;">Poids</th><th style="text-align:right;">Reps</th><th style="text-align:right;">Récup</th></tr></thead>
+          <tbody>${(entry.sets || []).map((set, index) => `<tr><td>${index + 1}</td><td style="text-align:right;">${kg(effW(hasLest(entry.equip), set))} kg</td><td style="text-align:right;">${num(set.reps)}</td><td style="text-align:right;">${set.rest != null ? set.rest + " s" : "—"}</td></tr>
+            ${(set.drops || []).map((drop, dropIndex) => `<tr><td class="drop-td">↳ dég. ${dropIndex + 1}</td><td style="text-align:right;">${kg(effW(hasLest(entry.equip), drop))} kg</td><td style="text-align:right;">${num(drop.reps)}</td><td></td></tr>`).join("")}`).join("")}</tbody>
         </table>
       </div>`).join("")}
       ${records.length === 0 ? `<p class="muted">Aucune série enregistrée.</p>` : ""}
@@ -462,6 +462,7 @@ function renderExerciseCard(s, entry) {
         <th style="text-align:right;">${weightLabel(entry.equip)}</th>
         ${withLest ? `<th style="text-align:right;">Lest ±</th>` : ""}
         <th style="text-align:right;">Reps</th>
+        <th style="text-align:right;">Récup</th>
         <th></th>
       </tr></thead>
       <tbody>
@@ -469,6 +470,7 @@ function renderExerciseCard(s, entry) {
       </tbody>
     </table>
 
+    <p class="hint">Récup = temps de repos après la série, en secondes (tape 90 ou 1:30).</p>
     ${withLest ? `<p class="hint">Lest positif = charge ajoutée · négatif = assistance. Poids compté : ${entry.equip === "pdc" ? "corps" : "poulie"} + lest.</p>` : ""}
 
     <div style="display:flex;align-items:center;gap:10px;margin-top:10px;">
@@ -487,13 +489,14 @@ function renderSetRow(s, entry, set, i) {
   const narrow = withLest ? ' class="cell-input mono narrow"' : ' class="cell-input mono"';
   const dropsHtml = (set.drops || []).map((d, j) => `
     <tr>
-      <td class="drop-td">↳ dég. ${j + 1}</td>
+      <td class="drop-td">↳ dég.${j + 1}</td>
       <td style="text-align:right;"><input${narrow} type="text" inputmode="decimal" value="${d.weight ?? 0}"
         data-action="change-value" data-session="${s.id}" data-entry="${entry.id}" data-set="${set.id}" data-drop="${d.id}" data-field="weight" /></td>
       ${withLest ? `<td style="text-align:right;"><input class="cell-input mono narrow" type="text" inputmode="decimal" value="${d.lest ?? 0}"
         data-action="change-value" data-session="${s.id}" data-entry="${entry.id}" data-set="${set.id}" data-drop="${d.id}" data-field="lest" /></td>` : ""}
       <td style="text-align:right;"><input${narrow} type="text" inputmode="numeric" value="${d.reps ?? 0}"
         data-action="change-value" data-session="${s.id}" data-entry="${entry.id}" data-set="${set.id}" data-drop="${d.id}" data-field="reps" /></td>
+      <td></td>
       <td style="text-align:right;"><button class="link del" data-action="remove-drop" data-session="${s.id}" data-entry="${entry.id}" data-set="${set.id}" data-drop="${d.id}">✕</button></td>
     </tr>`).join("");
 
@@ -506,6 +509,8 @@ function renderSetRow(s, entry, set, i) {
         data-action="change-value" data-session="${s.id}" data-entry="${entry.id}" data-set="${set.id}" data-field="lest" /></td>` : ""}
       <td style="text-align:right;"><input${narrow} type="text" inputmode="numeric" value="${set.reps ?? 0}"
         data-action="change-value" data-session="${s.id}" data-entry="${entry.id}" data-set="${set.id}" data-field="reps" /></td>
+      <td style="text-align:right;"><input class="cell-input mono narrow" type="text" inputmode="numeric" placeholder="—" value="${set.rest ?? ""}" title="Temps de récupération après la série, en secondes (ex : 90 ou 1:30)"
+        data-action="change-value" data-session="${s.id}" data-entry="${entry.id}" data-set="${set.id}" data-field="rest" /></td>
       <td style="text-align:right;white-space:nowrap;">
         <button class="link" title="Ajouter un dégressif" data-action="add-drop" data-session="${s.id}" data-entry="${entry.id}" data-set="${set.id}">↓</button>
         <button class="link del" title="Supprimer la série" data-action="remove-set" data-session="${s.id}" data-entry="${entry.id}" data-set="${set.id}">✕</button>
@@ -1082,6 +1087,7 @@ root.addEventListener("click", async (e) => {
           weight: last ? last.weight : (isPdc ? lastBodyWeight() : 20),
           lest: last ? (last.lest || 0) : 0,
           reps: last ? last.reps : 10,
+          rest: last && last.rest != null ? last.rest : 90,
           drops: [],
         });
         await persistSession(s, { entries: s.entries });
@@ -1206,7 +1212,8 @@ root.addEventListener("change", async (e) => {
       const set = entry.sets.find((x) => x.id === el.dataset.set);
       const target = el.dataset.drop ? set.drops.find((d) => d.id === el.dataset.drop) : set;
       const field = el.dataset.field;
-      target[field] = field === "reps" ? Math.round(num(el.value)) : num(el.value);
+      if (field === "rest") target.rest = parseRest(el.value);
+      else target[field] = field === "reps" ? Math.round(num(el.value)) : num(el.value);
       await persistSession(s, { entries: s.entries });
       render();
     }
@@ -1257,7 +1264,7 @@ root.addEventListener("submit", async (e) => {
       const isPdc = equip === "pdc";
       s.entries.push({
         id: uid(), exercise: name, equip, feel: null,
-        sets: [{ id: uid(), weight: isPdc ? lastBodyWeight() : 20, lest: 0, reps: 10, drops: [] }],
+        sets: [{ id: uid(), weight: isPdc ? lastBodyWeight() : 20, lest: 0, reps: 10, rest: 90, drops: [] }],
       });
       await persistSession(s, { entries: s.entries });
       state.sheet = null; render();
